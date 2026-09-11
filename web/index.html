@@ -9,11 +9,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#0D3B66">
 
-  <!-- iOS meta tags & icons -->
+  <!-- PWA / iOS install support -->
   <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="AutoAssist">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
@@ -51,6 +54,50 @@
       font-family: -apple-system, BlinkMacSystemFont, sans-serif;
       font-size: 28px; font-weight: 800; letter-spacing: 1px;
     }
+
+    /* Install / download banner */
+    #installCard {
+      position: fixed; left: 16px; right: 16px; bottom: 16px;
+      z-index: 99999; display: none;
+      background: rgba(9, 22, 40, 0.94);
+      color: #fff;
+      border: 1px solid rgba(255, 176, 32, 0.35);
+      border-radius: 18px;
+      padding: 16px 16px 16px 18px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      animation: slideUp 0.35s ease;
+    }
+    #installCard.show { display: flex; align-items: center; gap: 14px; }
+    @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    #installCard .icon {
+      width: 52px; height: 52px; border-radius: 14px; flex: 0 0 auto;
+      background: linear-gradient(180deg, #0D3B66, #092A49);
+      border: 1px solid rgba(255,255,255,0.25);
+      display: flex; align-items: center; justify-content: center;
+    }
+    #installCard .icon img { width: 40px; height: 40px; border-radius: 10px; }
+    #installCard .copy { flex: 1; min-width: 0; }
+    #installCard .title { font-size: 15px; font-weight: 800; letter-spacing: 0.2px; }
+    #installCard .sub { font-size: 12.5px; color: rgba(255,255,255,0.65); margin-top: 2px; line-height: 1.35; }
+    #installCard .btn {
+      flex: 0 0 auto;
+      background: linear-gradient(135deg, #FFB020, #FB8C2C);
+      color: #0F172A; font-weight: 800; font-size: 14px;
+      border: none; border-radius: 12px; padding: 11px 18px; cursor: pointer;
+      box-shadow: 0 4px 14px rgba(255, 176, 32, 0.35);
+    }
+    #installCard .btn:active { transform: scale(0.96); }
+    #installCard .close {
+      position: absolute; top: 6px; right: 10px;
+      background: none; border: none; color: rgba(255,255,255,0.5);
+      font-size: 20px; cursor: pointer; line-height: 1; padding: 4px;
+    }
+    #installCard .ios-steps { font-size: 12.5px; color: rgba(255,255,255,0.72); line-height: 1.5; margin-top: 2px; }
+    #installCard .ios-steps b { color: #FFB020; }
+    @media (min-width: 720px) {
+      #installCard { left: auto; right: 24px; bottom: 24px; width: 380px; }
+    }
   </style>
 </head>
 <body>
@@ -59,10 +106,72 @@
     <div class="brand">AutoAssist</div>
   </div>
 
+  <!-- PWA install / download banner -->
+  <div id="installCard">
+    <button class="close" onclick="hideInstallCard(true)" aria-label="Close">&times;</button>
+    <div class="icon"><img src="icons/Icon-192.png" alt="AutoAssist"></div>
+    <div class="copy">
+      <div class="title">Install AutoAssist</div>
+      <div class="sub" id="installSub">Get instant access from your home screen, even offline.</div>
+    </div>
+    <button class="btn" id="installBtn" onclick="startInstall()">Install</button>
+  </div>
+
   <script>
+    var deferredPrompt = null;
+    var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    var isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+    function showInstallCard() {
+      if (isStandalone) return;
+      if (sessionStorage.getItem('autoassist_install_dismissed')) return;
+      var el = document.getElementById('installCard');
+      el.classList.add('show');
+    }
+    function hideInstallCard(remember) {
+      document.getElementById('installCard').classList.remove('show');
+      if (remember) { try { sessionStorage.setItem('autoassist_install_dismissed', '1'); } catch (e) {} }
+    }
+    function startInstall() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function () {
+          deferredPrompt = null;
+          hideInstallCard(false);
+        });
+      } else if (isIos) {
+        window.location.hash = '';
+        var steps = document.getElementById('installSub');
+        steps.innerHTML = 'Tap the <b>Share</b> button in your browser, then choose <b>Add to Home Screen</b>.';
+        document.getElementById('installBtn').style.display = 'none';
+      }
+    }
+
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      deferredPrompt = e;
+      showInstallCard();
+    });
+    window.addEventListener('appinstalled', function () {
+      deferredPrompt = null;
+      hideInstallCard(false);
+    });
+
+    window.addEventListener('load', function () {
+      if (!isStandalone && isIos) {
+        setTimeout(function () {
+          if (!sessionStorage.getItem('autoassist_install_dismissed')) {
+            var sub = document.getElementById('installSub');
+            sub.innerHTML = 'Tap the <b>Share</b> button in your browser, then choose <b>Add to Home Screen</b>.';
+          }
+          showInstallCard();
+        }, 3000);
+      }
+    });
+
     window.addEventListener('flutter-first-frame', function () {
       var el = document.getElementById('loading');
-      if (el) { el.classList.add('hide'); setTimeout(() => el.remove(), 500); }
+      if (el) { el.classList.add('hide'); setTimeout(function () { el.remove(); }, 500); }
     });
   </script>
   <script src="flutter_bootstrap.js" async></script>

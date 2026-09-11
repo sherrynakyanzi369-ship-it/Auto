@@ -140,6 +140,24 @@ class AppTheme {
           ),
         ),
       ),
+      navigationRailTheme: NavigationRailThemeData(
+        backgroundColor: Colors.white,
+        indicatorColor: primary.withValues(alpha: 0.10),
+        useIndicator: true,
+        minExtendedWidth: 220,
+        selectedIconTheme: const IconThemeData(color: primary),
+        unselectedIconTheme: IconThemeData(color: Colors.grey.shade500),
+        selectedLabelTextStyle: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: primary,
+        ),
+        unselectedLabelTextStyle: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: Colors.grey.shade600,
+        ),
+      ),
       chipTheme: ChipThemeData(
         backgroundColor: Colors.white,
         selectedColor: primary,
