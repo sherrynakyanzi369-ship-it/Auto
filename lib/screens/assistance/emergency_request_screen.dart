@@ -45,7 +45,8 @@ class _EmergencyRequestScreenState extends State<EmergencyRequestScreen> {
   }
 
   Future<void> _loadVehicles() async {
-    final vehicles = await VehicleService.instance.getVehicles(AuthService.instance.email);
+    final vehicles =
+        await VehicleService.instance.getVehicles(AuthService.instance.email);
     if (!mounted) return;
     setState(() {
       _vehicles = vehicles;
@@ -102,7 +103,8 @@ class _EmergencyRequestScreenState extends State<EmergencyRequestScreen> {
       createdAt: DateTime.now(),
     );
 
-    await AssistanceService.instance.createRequest(AuthService.instance.email, request);
+    await AssistanceService.instance
+        .createRequest(AuthService.instance.email, request);
     if (!mounted) return;
     setState(() => _submitting = false);
 
@@ -119,145 +121,256 @@ class _EmergencyRequestScreenState extends State<EmergencyRequestScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Request assistance'),
-        backgroundColor: Colors.red.withValues(alpha: 0.05),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _InfoCard(description:
-              'Your request and live location will be shared with nearby mechanics. You can then chat to agree on a service.'),
-          const SizedBox(height: 16),
-          if (_vehicles.isEmpty)
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF2D040C), Color(0xFF0D3B66)],
+            stops: [0.0, 0.35],
+          ),
+        ),
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                child: Row(
                   children: [
-                    const Text('You need a registered vehicle to request assistance.',
-                        textAlign: TextAlign.center),
-                    const SizedBox(height: 10),
-                    FilledButton.icon(
-                      onPressed: _addVehicle,
-                      icon: const Icon(Icons.add),
-                      label: const Text('Register vehicle'),
+                    CircleAvatar(
+                      radius: 22,
+                      backgroundColor: Colors.white.withValues(alpha: 0.18),
+                      child: IconButton(
+                        icon: const Icon(Icons.arrow_back,
+                            color: Colors.white, size: 20),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Request assistance',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          Text(
+                            'Share your location with nearby mechanics',
+                            style: TextStyle(
+                              color: Colors.white54,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
-            )
-          else ...[
-            DropdownButtonFormField<String>(
-              initialValue: _vehicleId,
-              decoration: const InputDecoration(labelText: 'Vehicle'),
-              items: _vehicles
-                  .map((v) => DropdownMenuItem(
-                        value: v.id,
-                        child: Text('${v.displayName} · ${v.plate}'),
-                      ))
-                  .toList(),
-              onChanged: (v) => setState(() => _vehicleId = v),
-            ),
-            const SizedBox(height: 14),
-            DropdownButtonFormField<String>(
-              initialValue: _issueType,
-              decoration: const InputDecoration(labelText: 'What is the problem?'),
-              items: MockData.issueTypes
-                  .map((t) => DropdownMenuItem(value: t, child: Text(t)))
-                  .toList(),
-              onChanged: (v) => setState(() => _issueType = v ?? MockData.issueTypes.first),
-            ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: _description,
-              maxLines: 4,
-              decoration: const InputDecoration(
-                labelText: 'Describe the problem',
-                hintText: 'e.g. The engine stopped suddenly with a burning smell...',
-                alignLabelWithHint: true,
-              ),
-            ),
-          ],
-          const SizedBox(height: 20),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Row(
-                children: [
-                  const Icon(Icons.my_location, color: AppTheme.primary),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Your location',
-                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
-                        const SizedBox(height: 2),
-                        Text(
-                          '${_location.coords.latitude.toStringAsFixed(4)}, '
-                          '${_location.coords.longitude.toStringAsFixed(4)} · ${_location.label}',
-                          style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+              Expanded(
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: AppTheme.background,
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                  ),
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary.withValues(alpha: 0.07),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.info_outline,
+                                color: AppTheme.primary, size: 20),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Your request and live location will be shared with nearby mechanics. You can then chat to agree on a service.',
+                                style: TextStyle(
+                                  color: Colors.grey.shade700,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      if (_vehicles.isEmpty)
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: AppTheme.cardShadow,
+                          ),
+                          child: Column(
+                            children: [
+                              const Text(
+                                'You need a registered vehicle to request assistance.',
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 14),
+                              FilledButton.icon(
+                                onPressed: _addVehicle,
+                                icon: const Icon(Icons.add),
+                                label: const Text('Register vehicle'),
+                              ),
+                            ],
+                          ),
+                        )
+                      else ...[
+                        _SectionLabel('Select vehicle'),
+                        const SizedBox(height: 10),
+                        DropdownButtonFormField<String>(
+                          initialValue: _vehicleId,
+                          decoration: const InputDecoration(labelText: 'Vehicle'),
+                          items: _vehicles
+                              .map((v) => DropdownMenuItem(
+                                    value: v.id,
+                                    child: Text('${v.displayName} · ${v.plate}'),
+                                  ))
+                              .toList(),
+                          onChanged: (v) => setState(() => _vehicleId = v),
+                        ),
+                        const SizedBox(height: 20),
+                        _SectionLabel('What is the problem?'),
+                        const SizedBox(height: 10),
+                        DropdownButtonFormField<String>(
+                          initialValue: _issueType,
+                          decoration:
+                              const InputDecoration(labelText: 'Issue type'),
+                          items: MockData.issueTypes
+                              .map((t) => DropdownMenuItem(
+                                  value: t, child: Text(t)))
+                              .toList(),
+                          onChanged: (v) =>
+                              setState(() => _issueType = v ?? MockData.issueTypes.first),
+                        ),
+                        const SizedBox(height: 20),
+                        _SectionLabel('Describe the problem'),
+                        const SizedBox(height: 10),
+                        TextField(
+                          controller: _description,
+                          maxLines: 4,
+                          decoration: const InputDecoration(
+                            hintText:
+                                'e.g. The engine stopped suddenly with a burning smell...',
+                            alignLabelWithHint: true,
+                          ),
                         ),
                       ],
-                    ),
+                      const SizedBox(height: 24),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: AppTheme.softShadow,
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 42,
+                              height: 42,
+                              decoration: BoxDecoration(
+                                color: AppTheme.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(Icons.my_location,
+                                  color: AppTheme.primary, size: 21),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Your location',
+                                      style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w700)),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${_location.coords.latitude.toStringAsFixed(4)}, '
+                                    '${_location.coords.longitude.toStringAsFixed(4)} · ${_location.label}',
+                                    style: TextStyle(
+                                      color: Colors.grey.shade600,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: _locating ? null : _refreshLocation,
+                              child: _locating
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2),
+                                    )
+                                  : const Text('Update'),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 28),
+                      FilledButton.icon(
+                        onPressed:
+                            _submitting || _vehicles.isEmpty ? null : _submit,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppTheme.emergency,
+                          minimumSize: const Size(double.infinity, 56),
+                        ),
+                        icon: const Icon(Icons.sos),
+                        label: _submitting
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                    color: Colors.white, strokeWidth: 2.4),
+                              )
+                            : const Text(
+                                'Submit Emergency Request',
+                                style: TextStyle(fontSize: 16),
+                              ),
+                      ),
+                    ],
                   ),
-                  TextButton(
-                    onPressed: _locating ? null : _refreshLocation,
-                    child: _locating
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('Update'),
-                  ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
-          const SizedBox(height: 24),
-          FilledButton.icon(
-            onPressed: _submitting || _vehicles.isEmpty ? null : _submit,
-            style: FilledButton.styleFrom(backgroundColor: AppTheme.emergency),
-            icon: const Icon(Icons.sos),
-            label: _submitting
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                  )
-                : const Text('Submit Emergency Request'),
-          ),
-        ],
+        ),
       ),
     );
   }
 }
 
-class _InfoCard extends StatelessWidget {
-  final String description;
-
-  const _InfoCard({required this.description});
+class _SectionLabel extends StatelessWidget {
+  final String text;
+  const _SectionLabel(this.text);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppTheme.primary.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.info_outline, color: AppTheme.primary),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(description,
-                style: TextStyle(color: Colors.grey.shade800, fontSize: 13)),
-          ),
-        ],
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 15,
+        fontWeight: FontWeight.w800,
+        letterSpacing: -0.2,
       ),
     );
   }

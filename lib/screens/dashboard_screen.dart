@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 
-import '../../models/assistance_request.dart';
-import '../../models/vehicle.dart';
-import '../../services/assistance_service.dart';
-import '../../services/auth_service.dart';
-import '../../services/vehicle_service.dart';
-import '../../theme/app_theme.dart';
-import '../../utils/formatters.dart';
+import '../data/app_images.dart';
+import '../models/assistance_request.dart';
+import '../models/vehicle.dart';
+import '../services/assistance_service.dart';
+import '../services/auth_service.dart';
+import '../services/vehicle_service.dart';
+import '../theme/app_theme.dart';
+import '../utils/formatters.dart';
+import '../widgets/animated_entry.dart';
+import '../widgets/hero_carousel.dart';
+import '../widgets/section_header.dart';
 import 'ai/ai_assistant_screen.dart';
 import 'assistance/emergency_request_screen.dart';
 import 'chat/chat_list_screen.dart';
@@ -54,226 +58,288 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final pendingCount = _requests.where((r) => r.status == 'Pending').length;
 
     return Scaffold(
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _load,
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-            children: [
-              Text(
-                'Welcome back,',
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                firstName,
-                style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'How can we assist your vehicle today?',
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-              ),
-              const SizedBox(height: 16),
-              _EmergencyBanner(
-                onPressed: () => _open(const EmergencyRequestScreen()),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Services',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 12),
-              GridView.count(
-                crossAxisCount: 2,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 1.5,
-                children: [
-                  _QuickAction(
-                    icon: Icons.directions_car_filled_outlined,
-                    color: AppTheme.primary,
-                    label: 'My Vehicles',
-                    count: _vehicles.length.toString(),
-                    onTap: () => _open(const VehiclesScreen()),
-                  ),
-                  _QuickAction(
-                    icon: Icons.location_on_outlined,
-                    color: const Color(0xFF00838F),
-                    label: 'Nearby Mechanics',
-                    onTap: () => _open(const MechanicsScreen()),
-                  ),
-                  _QuickAction(
-                    icon: Icons.extension_outlined,
-                    color: const Color(0xFF6A1B9A),
-                    label: 'Spare Parts',
-                    onTap: () => _open(const SparePartsScreen()),
-                  ),
-                  _QuickAction(
-                    icon: Icons.smart_toy_outlined,
-                    color: const Color(0xFFE65100),
-                    label: 'AI Assistant',
-                    onTap: () => _open(const AiAssistantScreen()),
-                  ),
-                  _QuickAction(
-                    icon: Icons.chat_outlined,
-                    color: const Color(0xFF1565C0),
-                    label: 'Messages',
-                    count: pendingCount.toString(),
-                    onTap: () => _open(ChatListScreen(ownerEmail: AuthService.instance.email)),
-                  ),
-                  _QuickAction(
-                    icon: Icons.sos_outlined,
-                    color: AppTheme.emergency,
-                    label: 'Request Help',
-                    onTap: () => _open(const EmergencyRequestScreen()),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Recent requests', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
-                  TextButton(
-                    onPressed: () => _open(const VehiclesScreen()),
-                    child: const Text('View details'),
-                  ),
-                ],
-              ),
-              if (_requests.isEmpty)
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      children: [
-                        Icon(Icons.assignment_outlined, size: 40, color: Colors.grey.shade400),
-                        const SizedBox(height: 8),
-                        Text(
-                          'No assistance requests yet. If your vehicle breaks down, use Request Help.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey.shade600),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              else
-                ..._requests.take(3).map((r) => _RequestRow(request: r)),
-            ],
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFFFDF8F0), AppTheme.background],
+            stops: [0.0, 0.5],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _EmergencyBanner extends StatelessWidget {
-  final VoidCallback onPressed;
-
-  const _EmergencyBanner({required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppTheme.emergency, Color(0xFFB71C2F)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      padding: const EdgeInsets.all(18),
-      child: Row(
-        children: [
-          const Icon(Icons.sos, size: 44, color: Colors.white),
-          const SizedBox(width: 14),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        child: SafeArea(
+          child: RefreshIndicator(
+            onRefresh: _load,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
               children: [
-                Text(
-                  'Emergency assistance',
-                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: const LinearGradient(
+                          colors: [AppTheme.accent, AppTheme.emergency],
+                        ),
+                      ),
+                      child: CircleAvatar(
+                        radius: 22,
+                        backgroundColor: AppTheme.primary,
+                        child: Text(
+                          firstName.isNotEmpty ? firstName[0].toUpperCase() : 'D',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 18,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Good day,',
+                            style: TextStyle(
+                              color: Colors.grey.shade600,
+                              fontSize: 12,
+                            ),
+                          ),
+                          Text(
+                            firstName,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: AppTheme.softShadow,
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.circle, size: 8, color: AppTheme.success),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Online',
+                            style: TextStyle(
+                              color: Colors.grey.shade800,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                SizedBox(height: 4),
-                Text(
-                  'Broken down? Request help and share your location with nearby mechanics.',
-                  style: TextStyle(color: Colors.white70, fontSize: 12),
+                const SizedBox(height: 20),
+                HeroCarousel(
+                  images: AppImages.carouselImages,
+                  captions: AppImages.carouselCaptions,
                 ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(18),
+                          gradient: const LinearGradient(
+                            colors: AppTheme.brandGradient,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.primary.withValues(alpha: 0.3),
+                              blurRadius: 18,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: AnimatedPress(
+                          onTap: () => _open(const EmergencyRequestScreen()),
+                          child: Row(
+                            children: [
+                              const SizedBox(width: 6),
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.sos,
+                                  color: AppTheme.emergency,
+                                  size: 22,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              const Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Need help now?',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Request emergency assistance',
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const Icon(
+                                Icons.arrow_forward_ios,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 10),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 26),
+                const SectionHeader(
+                  title: 'Services',
+                  subtitle: 'Everything you need, one tap away',
+                ),
+                const SizedBox(height: 14),
+                GridView.count(
+                  crossAxisCount: 2,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  mainAxisSpacing: 14,
+                  crossAxisSpacing: 14,
+                  childAspectRatio: 0.92,
+                  children: [
+                    ImageServiceCard(
+                      image: AppImages.serviceVehicles,
+                      title: 'My Vehicles',
+                      subtitle: '$_vehiclesCount registered',
+                      tagColor: AppTheme.primary,
+                      trailing: _vehicles.length.toString(),
+                      onTap: () => _open(const VehiclesScreen()),
+                    ),
+                    ImageServiceCard(
+                      image: AppImages.serviceMechanics,
+                      title: 'Mechanics',
+                      subtitle: 'Trusted nearby pros',
+                      tagColor: const Color(0xFF00838F),
+                      onTap: () => _open(const MechanicsScreen()),
+                    ),
+                    ImageServiceCard(
+                      image: AppImages.serviceParts,
+                      title: 'Spare Parts',
+                      subtitle: 'Quality auto parts',
+                      tagColor: const Color(0xFF7B2CBF),
+                      onTap: () => _open(const SparePartsScreen()),
+                    ),
+                    ImageServiceCard(
+                      image: AppImages.serviceAi,
+                      title: 'AI Assistant',
+                      subtitle: 'Fix-it guidance 24/7',
+                      tagColor: const Color(0xFFD04A00),
+                      onTap: () => _open(const AiAssistantScreen()),
+                    ),
+                    ImageServiceCard(
+                      image: AppImages.serviceChat,
+                      title: 'Messages',
+                      subtitle: 'Chat with mechanics',
+                      tagColor: const Color(0xFF1565C0),
+                      trailing: pendingCount.toString(),
+                      onTap: () => _open(ChatListScreen(ownerEmail: AuthService.instance.email)),
+                    ),
+                    ImageServiceCard(
+                      image: AppImages.serviceHelp,
+                      title: 'Request Help',
+                      subtitle: 'Send an SOS alert',
+                      tagColor: AppTheme.emergency,
+                      onTap: () => _open(const EmergencyRequestScreen()),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 26),
+                const SectionHeader(
+                  title: 'Recent requests',
+                  subtitle: 'Your latest assistance activity',
+                ),
+                const SizedBox(height: 12),
+                if (_requests.isEmpty)
+                  AnimatedEntry(
+                    child: Container(
+                      padding: const EdgeInsets.all(22),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: AppTheme.cardShadow,
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(Icons.assignment_outlined,
+                              size: 44, color: Colors.grey.shade400),
+                          const SizedBox(height: 10),
+                          Text(
+                            'No assistance requests yet',
+                            style: TextStyle(
+                              color: Colors.grey.shade700,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'If your vehicle breaks down, use Request Help above.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.grey.shade500,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  ..._requests.take(3).map(
+                        (r) => AnimatedEntry(
+                          index: _requests.indexOf(r),
+                          child: _RequestRow(request: r),
+                        ),
+                      ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          IconButton.filled(
-            onPressed: onPressed,
-            style: IconButton.styleFrom(backgroundColor: Colors.white),
-            icon: const Icon(Icons.arrow_forward, color: AppTheme.emergency),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _QuickAction extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final String label;
-  final String? count;
-  final VoidCallback onTap;
-
-  const _QuickAction({
-    required this.icon,
-    required this.color,
-    required this.label,
-    this.count,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Icon(icon, color: color, size: 26),
-                  if (count != null)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        count!,
-                        style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                ],
-              ),
-              Text(
-                label,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
         ),
       ),
     );
+  }
+
+  String get _vehiclesCount {
+    final n = _vehicles.length;
+    return n == 0 ? 'Add your first' : n.toString();
   }
 }
 
@@ -290,28 +356,45 @@ class _RequestRow extends StatelessWidget {
             ? AppTheme.success
             : AppTheme.primary;
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: AppTheme.softShadow,
+      ),
       child: ListTile(
-        leading: CircleAvatar(
-          radius: 22,
-          backgroundColor: statusColor.withValues(alpha: 0.14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        leading: Container(
+          width: 46,
+          height: 46,
+          decoration: BoxDecoration(
+            color: statusColor.withValues(alpha: 0.13),
+            borderRadius: BorderRadius.circular(14),
+          ),
           child: Icon(Icons.build_circle_outlined, color: statusColor),
         ),
-        title: Text(request.issueType, style: const TextStyle(fontWeight: FontWeight.w600)),
+        title: Text(
+          request.issueType,
+          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+        ),
         subtitle: Text(
           '${request.vehicleName} · ${formatDateTime(request.createdAt)}',
           style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
         ),
         trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
             color: statusColor.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
             request.status,
-            style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.w700),
+            style: TextStyle(
+              color: statusColor,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ),
       ),

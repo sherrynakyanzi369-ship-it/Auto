@@ -5,6 +5,7 @@ import '../../models/mechanic.dart';
 import '../../services/auth_service.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/formatters.dart';
+import '../../widgets/animated_entry.dart';
 import '../chat/chat_screen.dart';
 
 class RequestCreatedScreen extends StatelessWidget {
@@ -20,114 +21,210 @@ class RequestCreatedScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Request submitted'),
-        automaticallyImplyLeading: false,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppTheme.success.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              children: [
-                const Icon(Icons.check_circle, color: AppTheme.success, size: 56),
-                const SizedBox(height: 12),
-                const Text(
-                  'Help is on the way!',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Your assistance request ${request.id} was submitted successfully.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
-                ),
-              ],
-            ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF0A3828), AppTheme.background],
+            stops: [0.0, 0.35],
           ),
-          const SizedBox(height: 16),
-          Card(
-            child: Column(
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.confirmation_number_outlined, color: AppTheme.primary),
-                  title: const Text('Request ID', style: TextStyle(fontSize: 13)),
-                  subtitle: Text(request.id, style: const TextStyle(fontWeight: FontWeight.w600)),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.build_outlined, color: AppTheme.primary),
-                  title: const Text('Issue', style: TextStyle(fontSize: 13)),
-                  subtitle: Text(request.issueType, style: const TextStyle(fontWeight: FontWeight.w600)),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.directions_car_outlined, color: AppTheme.primary),
-                  title: const Text('Vehicle', style: TextStyle(fontSize: 13)),
-                  subtitle: Text(request.vehicleName, style: const TextStyle(fontWeight: FontWeight.w600)),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.location_on_outlined, color: AppTheme.primary),
-                  title: const Text('Location', style: TextStyle(fontSize: 13)),
-                  subtitle: Text(
-                    '${request.latitude.toStringAsFixed(4)}, ${request.longitude.toStringAsFixed(4)}',
-                    style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        child: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+            children: [
+              AnimatedEntry(
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppTheme.success.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                        color: AppTheme.success.withValues(alpha: 0.2)),
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [AppTheme.success, Color(0xFF27AE60)],
+                          ),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color:
+                                  AppTheme.success.withValues(alpha: 0.4),
+                              blurRadius: 24,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(Icons.check_circle,
+                            color: Colors.white, size: 40),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Help is on the way!',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Your request ${request.id} was submitted successfully.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.grey.shade700,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                ListTile(
-                  leading: const Icon(Icons.access_time, color: AppTheme.primary),
-                  title: const Text('Submitted', style: TextStyle(fontSize: 13)),
-                  subtitle: Text(formatDateTime(request.createdAt),
-                      style: const TextStyle(fontWeight: FontWeight.w600)),
+              ),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(22),
+                  boxShadow: AppTheme.cardShadow,
                 ),
-                ListTile(
-                  leading: const Icon(Icons.radar, color: AppTheme.primary),
-                  title: const Text('Status', style: TextStyle(fontSize: 13)),
-                  subtitle: Text(request.status, style: const TextStyle(fontWeight: FontWeight.w600)),
+                child: Column(
+                  children: [
+                    _infoRow(Icons.confirmation_number_outlined,
+                        'Request ID', request.id),
+                    _infoRow(Icons.build_outlined, 'Issue',
+                        request.issueType),
+                    _infoRow(Icons.directions_car_outlined, 'Vehicle',
+                        request.vehicleName),
+                    _infoRow(
+                        Icons.location_on_outlined,
+                        'Location',
+                        '${request.latitude.toStringAsFixed(4)}, ${request.longitude.toStringAsFixed(4)}'),
+                    _infoRow(Icons.access_time, 'Submitted',
+                        formatDateTime(request.createdAt)),
+                    _infoRow(
+                        Icons.radar, 'Status', request.status),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            'Suggested nearby mechanics',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 10),
-          ...nearbyMechanics.map(
-            (m) => Card(
-              margin: const EdgeInsets.only(bottom: 10),
-              child: ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: AppTheme.primary.withValues(alpha: 0.12),
-                  child: const Icon(Icons.car_repair, color: AppTheme.primary),
+              ),
+              const SizedBox(height: 24),
+              if (nearbyMechanics.isNotEmpty) ...[
+                const Text(
+                  'Suggested nearby mechanics',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
-                title: Text(m.businessName, style: const TextStyle(fontWeight: FontWeight.w600)),
-                subtitle: Text(
-                  '${m.specialty} · ${m.distanceKm.toStringAsFixed(1)} km',
-                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-                ),
-                trailing: TextButton(
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => ChatScreen(
-                        mechanicId: m.id,
-                        ownerEmail: AuthService.instance.email,
+                const SizedBox(height: 12),
+                ...nearbyMechanics.map(
+                  (m) => AnimatedEntry(
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: AppTheme.softShadow,
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 46,
+                            height: 46,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                  colors: AppTheme.brandGradient),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: const Icon(Icons.car_repair,
+                                color: Colors.white),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(m.businessName,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 14)),
+                                Text(
+                                  '${m.specialty} · ${m.distanceKm.toStringAsFixed(1)} km',
+                                  style: TextStyle(
+                                      color: Colors.grey.shade600,
+                                      fontSize: 12),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => ChatScreen(
+                                  mechanicId: m.id,
+                                  ownerEmail: AuthService.instance.email,
+                                ),
+                              ),
+                            ),
+                            icon: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color:
+                                    AppTheme.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(Icons.chat_outlined,
+                                  color: AppTheme.primary, size: 18),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                  child: const Text('Message'),
                 ),
+              ],
+              const SizedBox(height: 20),
+              FilledButton(
+                onPressed: () {
+                  Navigator.of(context).popUntil((r) => r.isFirst);
+                },
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 54),
+                ),
+                child: const Text('Back to Home'),
               ),
-            ),
+            ],
           ),
-          const SizedBox(height: 12),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Back to Home'),
+        ),
+      ),
+    );
+  }
+
+  Widget _infoRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: AppTheme.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style:
+                        TextStyle(fontSize: 12, color: Colors.grey.shade500)),
+                Text(value,
+                    style: const TextStyle(fontWeight: FontWeight.w700)),
+              ],
+            ),
           ),
         ],
       ),

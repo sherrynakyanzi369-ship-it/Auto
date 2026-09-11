@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 
+import '../../data/app_images.dart';
 import '../../models/assistance_request.dart';
 import '../../models/vehicle.dart';
 import '../../services/assistance_service.dart';
 import '../../services/auth_service.dart';
 import '../../services/vehicle_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/animated_entry.dart';
+import '../../widgets/app_image.dart';
 import '../auth/login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -29,7 +32,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _load() async {
     final vehicles = await VehicleService.instance.getVehicles(widget.ownerEmail);
-    final requests = await AssistanceService.instance.getRequests(widget.ownerEmail);
+    final requests =
+        await AssistanceService.instance.getRequests(widget.ownerEmail);
     if (!mounted) return;
     setState(() {
       _vehicles = vehicles;
@@ -57,132 +61,244 @@ class _ProfileScreenState extends State<ProfileScreen> {
         .join();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('My profile')),
       body: RefreshIndicator(
         onRefresh: _load,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+          padding: EdgeInsets.zero,
           children: [
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    CircleAvatar(
-                      radius: 44,
-                      backgroundColor: AppTheme.primary.withValues(alpha: 0.12),
-                      child: Text(
-                        initials,
-                        style: const TextStyle(
-                          color: AppTheme.primary,
-                          fontSize: 30,
-                          fontWeight: FontWeight.w800,
-                        ),
+            SizedBox(
+              height: 220,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  AppImage(
+                    AppImages.profileHeader,
+                    fit: BoxFit.cover,
+                    radius: null,
+                  ),
+                  Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Color(0xCC0D3B66),
+                          Color(0xF20D3B66),
+                        ],
+                        stops: [0.25, 0.65, 1.0],
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      user?.name ?? '',
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      user?.email ?? '',
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-                    ),
-                    if (user?.phone.isNotEmpty ?? false) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        user!.phone,
-                        style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-                      ),
-                    ],
-                    const SizedBox(height: 16),
-                    Row(
+                  ),
+                  Positioned(
+                    left: 20,
+                    bottom: 20,
+                    right: 20,
+                    child: Row(
                       children: [
-                        Expanded(
-                          child: _Stat(
-                            value: _vehicles.length.toString(),
-                            label: 'Vehicles',
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: const LinearGradient(
+                              colors: [AppTheme.accent, AppTheme.emergency],
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.3),
+                                blurRadius: 16,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: CircleAvatar(
+                            radius: 38,
+                            backgroundColor: AppTheme.primary,
+                            child: Text(
+                              initials,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 26,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
                           ),
                         ),
-                        Container(width: 1, height: 40, color: Colors.grey.shade300),
+                        const SizedBox(width: 14),
                         Expanded(
-                          child: _Stat(
-                            value: _requests.length.toString(),
-                            label: 'Requests',
-                          ),
-                        ),
-                        Container(width: 1, height: 40, color: Colors.grey.shade300),
-                        Expanded(
-                          child: _Stat(
-                            value: _requests.where((r) => r.status == 'Pending').length.toString(),
-                            label: 'Pending',
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                user?.name ?? '',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                user?.email ?? '',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.8),
+                                  fontSize: 13,
+                                ),
+                              ),
+                              if (user?.phone.isNotEmpty ?? false)
+                                Text(
+                                  user!.phone,
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.7),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
                       ],
                     ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text('Account', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 8),
-            Card(
-              child: Column(
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.directions_car_outlined),
-                    title: const Text('Registered vehicles'),
-                    subtitle: Text('${_vehicles.length} vehicle(s) on this account'),
-                    trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: const Icon(Icons.shield_outlined),
-                    title: const Text('Privacy'),
-                    subtitle: const Text('Your location is shared only with service providers you engage.'),
-                    trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: const Icon(Icons.rule_outlined),
-                    title: const Text('AI Assistant disclaimer'),
-                    subtitle: const Text('AI guidance does not replace professional mechanical diagnosis.'),
-                    trailing: const Icon(Icons.chevron_right, color: Colors.grey),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
-            OutlinedButton.icon(
-              onPressed: () => showDialog(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  title: const Text('Sign out'),
-                  content: const Text('Are you sure you want to sign out of AutoAssist?'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      child: const Text('Cancel'),
+            Container(
+              transform: Matrix4.translationValues(0, -20, 0),
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(22),
+                boxShadow: AppTheme.cardShadow,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _Stat(
+                      value: _vehicles.length.toString(),
+                      label: 'Vehicles',
+                      icon: Icons.directions_car_outlined,
                     ),
-                    FilledButton(
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        _logout();
-                      },
-                      child: const Text('Sign out'),
+                  ),
+                  Container(width: 1, height: 48, color: Colors.grey.shade200),
+                  Expanded(
+                    child: _Stat(
+                      value: _requests.length.toString(),
+                      label: 'Requests',
+                      icon: Icons.assignment_outlined,
+                    ),
+                  ),
+                  Container(width: 1, height: 48, color: Colors.grey.shade200),
+                  Expanded(
+                    child: _Stat(
+                      value: _requests
+                          .where((r) => r.status == 'Pending')
+                          .length
+                          .toString(),
+                      label: 'Pending',
+                      icon: Icons.schedule,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: Text('Account',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+            ),
+            const SizedBox(height: 10),
+            AnimatedEntry(
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(22),
+                  boxShadow: AppTheme.cardShadow,
+                ),
+                child: Column(
+                  children: [
+                    _menuTile(
+                      icon: Icons.directions_car_outlined,
+                      title: 'Registered vehicles',
+                      subtitle: '${_vehicles.length} vehicle(s) on this account',
+                    ),
+                    _divider(),
+                    _menuTile(
+                      icon: Icons.shield_outlined,
+                      title: 'Privacy',
+                      subtitle:
+                          'Your location is shared only with service providers you engage.',
+                    ),
+                    _divider(),
+                    _menuTile(
+                      icon: Icons.rule_outlined,
+                      title: 'AI Assistant disclaimer',
+                      subtitle:
+                          'AI guidance does not replace professional mechanical diagnosis.',
                     ),
                   ],
                 ),
               ),
-              icon: const Icon(Icons.logout),
-              label: const Text('Sign out'),
             ),
+            const SizedBox(height: 24),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: OutlinedButton.icon(
+                onPressed: () => showDialog(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Sign out'),
+                    content:
+                        const Text('Are you sure you want to sign out of AutoAssist?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('Cancel'),
+                      ),
+                      FilledButton(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          _logout();
+                        },
+                        child: const Text('Sign out'),
+                      ),
+                    ],
+                  ),
+                ),
+                icon: const Icon(Icons.logout),
+                label: const Text('Sign out'),
+              ),
+            ),
+            const SizedBox(height: 40),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _divider() => Divider(height: 1, indent: 58, color: Colors.grey.shade100);
+
+  Widget _menuTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    return ListTile(
+      leading: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: AppTheme.primary.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, size: 19, color: AppTheme.primary),
+      ),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+      subtitle: Text(subtitle, style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+      trailing: Icon(Icons.chevron_right, color: Colors.grey.shade400),
     );
   }
 }
@@ -190,16 +306,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
 class _Stat extends StatelessWidget {
   final String value;
   final String label;
+  final IconData icon;
 
-  const _Stat({required this.value, required this.label});
+  const _Stat({required this.value, required this.label, required this.icon});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
-        const SizedBox(height: 2),
-        Text(label, style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+        Icon(icon, color: AppTheme.primary, size: 22),
+        const SizedBox(height: 6),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+        ),
+        Text(
+          label,
+          style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+        ),
       ],
     );
   }
