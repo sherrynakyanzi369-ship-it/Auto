@@ -145,17 +145,23 @@ class _BrandMark extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 42,
+            height: 42,
+            clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFF0D3B66), Color(0xFF1F7EB6)],
-              ),
-              borderRadius: BorderRadius.circular(12),
+              shape: BoxShape.circle,
+              color: Colors.white,
+              border: Border.all(color: const Color(0xFF0D3B66), width: 1.6),
             ),
-            child: const Icon(Icons.directions_car_filled, color: Colors.white, size: 22),
+            child: Image.asset(
+              'assets/images/Logo.jpeg',
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => const Icon(
+                Icons.directions_car_filled,
+                size: 22,
+                color: Color(0xFF0D3B66),
+              ),
+            ),
           ),
           const SizedBox(width: 10),
           Column(

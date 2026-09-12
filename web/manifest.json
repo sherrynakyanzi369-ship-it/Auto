@@ -5,7 +5,6 @@
     "start_url": "/",
     "scope": "/",
     "display": "standalone",
-    "display_override": ["standalone", "minimal-ui"],
     "background_color": "#F4F6FB",
     "theme_color": "#0D3B66",
     "description": "AutoAssist connects you with trusted mechanics, spare parts dealers and 24/7 roadside emergency help. Book mechanics, order parts, chat with experts and get help on the go.",
@@ -15,6 +14,12 @@
     "lang": "en",
     "dir": "ltr",
     "icons": [
+        {
+            "src": "icons/apple-touch-icon.png",
+            "sizes": "180x180",
+            "type": "image/png",
+            "purpose": "any"
+        },
         {
             "src": "icons/Icon-192.png",
             "sizes": "192x192",

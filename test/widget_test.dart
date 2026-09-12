@@ -11,9 +11,11 @@ void main() {
 
     await tester.pumpWidget(const AutoAssistApp());
 
-    // Let the splash screen animation play out and the session check resolve.
+    // Let the 5.5s splash animation play out and the session check resolve.
     await tester.pump(const Duration(milliseconds: 500));
-    await tester.pump(const Duration(seconds: 2));
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pump(const Duration(seconds: 3));
+    // One more frame so the navigated login screen actually builds.
     await tester.pump(const Duration(seconds: 2));
 
     expect(find.text('Welcome back'), findsOneWidget);
