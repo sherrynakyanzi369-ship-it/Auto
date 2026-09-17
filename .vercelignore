@@ -1,0 +1,22 @@
+# Large build/tooling dirs not needed by the static deploy
+android/
+ios/
+linux/
+macos/
+windows/
+web/
+tools/
+test/
+automotive1/
+.dart_tool/
+.build/
+build/native_assets/
+build/test_cache/
+build/unit_test_assets/
+.vercel/
+.pytest_cache/
+
+# Crash dumps / logs
+*.log
+hs_err_pid*.log
+replay_pid*.log
