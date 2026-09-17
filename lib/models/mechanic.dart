@@ -31,6 +31,25 @@ class Mechanic {
     this.distanceKm = 0,
   });
 
+  factory Mechanic.fromJson(Map<String, dynamic> json) => Mechanic(
+        id: json['id'] as String? ?? '',
+        name: json['name'] as String? ?? '',
+        businessName: json['businessName'] as String? ?? '',
+        specialty: json['specialty'] as String? ?? '',
+        services: (json['services'] as List<dynamic>? ?? const [])
+            .map((e) => e.toString())
+            .toList(),
+        rating: (json['rating'] as num?)?.toDouble() ?? 0,
+        reviewCount: (json['reviewCount'] as num?)?.toInt() ?? 0,
+        available: json['available'] as bool? ?? false,
+        phone: json['phone'] as String? ?? '',
+        address: json['address'] as String? ?? '',
+        latitude: (json['latitude'] as num?)?.toDouble() ?? 0,
+        longitude: (json['longitude'] as num?)?.toDouble() ?? 0,
+        experience: json['experience'] as String? ?? '',
+        distanceKm: (json['distanceKm'] as num?)?.toDouble() ?? 0,
+      );
+
   Mechanic copyWith({double? distanceKm}) => Mechanic(
         id: id,
         name: name,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../data/app_images.dart';
 import '../../models/mechanic.dart';
+import '../../services/api_client.dart';
 import '../../services/location_service.dart';
 import '../../services/mechanic_service.dart';
 import '../../theme/app_theme.dart';
@@ -21,6 +22,8 @@ class _MechanicsScreenState extends State<MechanicsScreen> {
   String? _specialty;
   AppLatLng _origin = LocationService.defaultKampala;
   List<Mechanic> _mechanics = [];
+  List<String> _specialties = [];
+  String? _error;
   bool _loading = true;
 
   @override
@@ -39,27 +42,53 @@ class _MechanicsScreenState extends State<MechanicsScreen> {
     setState(() => _loading = true);
     final result = await LocationService.instance.locate();
     if (!mounted) return;
+    setState(() => _origin = result.coords);
+    try {
+      _specialties = await MechanicService.instance.fetchSpecialties();
+    } catch (_) {
+      _specialties = [];
+    }
+    if (!mounted) return;
+    await _applyFilters();
+  }
+
+  Future<void> _applyFilters() async {
+    final List<Mechanic> mechanics;
+    try {
+      mechanics = await MechanicService.instance.nearDriver(
+        _origin,
+        query: _search.text,
+        specialty: _specialty,
+      );
+    } on ApiException catch (e) {
+      _applyError(e.toString());
+      return;
+    } on NetworkException catch (e) {
+      _applyError(e.toString());
+      return;
+    }
+    if (!mounted) return;
     setState(() {
-      _origin = result.coords;
-      _applyFilters();
+      _mechanics = mechanics;
+      _error = null;
       _loading = false;
     });
   }
 
-  void _applyFilters() {
-    _mechanics = MechanicService.instance.nearDriver(
-      _origin,
-      query: _search.text,
-      specialty: _specialty,
-    );
+  void _applyError(String message) {
+    if (!mounted) return;
+    setState(() {
+      _error = message;
+      _loading = false;
+    });
   }
 
-  void _onSearchChanged(String _) => setState(_applyFilters);
+  void _onSearchChanged(String _) {
+    _applyFilters();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final specialties = MechanicService.instance.specialties(false);
-
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -131,16 +160,16 @@ class _MechanicsScreenState extends State<MechanicsScreen> {
                       },
                     ),
                   ),
-                  ...specialties.map(
-                    (m) => Padding(
+                  ..._specialties.map(
+                    (specialty) => Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: FilterChip(
-                        label: Text(m.specialty),
-                        selected: _specialty == m.specialty,
+                        label: Text(specialty),
+                        selected: _specialty == specialty,
                         onSelected: (_) {
                           setState(() {
                             _specialty =
-                                _specialty == m.specialty ? null : m.specialty;
+                                _specialty == specialty ? null : specialty;
                           });
                           _applyFilters();
                         },
@@ -153,25 +182,93 @@ class _MechanicsScreenState extends State<MechanicsScreen> {
             const SizedBox(height: 6),
             if (_loading)
               const Expanded(child: Center(child: CircularProgressIndicator()))
+            else if (_error != null)
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.cloud_off,
+                          size: 56, color: Colors.grey.shade400),
+                      const SizedBox(height: 12),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
+                        child: Text(
+                          _error!,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.grey.shade600),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      FilledButton.icon(
+                        onPressed: _refresh,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                ),
+              )
             else if (_mechanics.isEmpty)
               const Expanded(child: _NoResults())
             else
               Expanded(
-                child: ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(20, 6, 20, 20),
-                  itemCount: _mechanics.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 14),
-                  itemBuilder: (context, index) {
-                    final m = _mechanics[index];
-                    return AnimatedEntry(
-                      index: index,
-                      child: _MechanicCard(
-                        mechanic: m,
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => MechanicProfileScreen(mechanic: m),
-                          ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final bool wide = constraints.maxWidth >= 900;
+                    if (wide) {
+                      return GridView.builder(
+                        padding: const EdgeInsets.fromLTRB(20, 6, 20, 20),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 14,
+                          mainAxisSpacing: 14,
+                          childAspectRatio: 1,
                         ),
+                        itemCount: _mechanics.length,
+                        itemBuilder: (context, index) {
+                          final m = _mechanics[index];
+                          return AnimatedEntry(
+                            index: index,
+                            child: _MechanicCard(
+                              mechanic: m,
+                              onTap: () => Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      MechanicProfileScreen(mechanic: m),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    }
+                    return SizedBox(
+                      height: 250,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.fromLTRB(20, 6, 20, 6),
+                        itemCount: _mechanics.length,
+                        separatorBuilder: (_, _) => const SizedBox(width: 14),
+                        itemBuilder: (context, index) {
+                          final m = _mechanics[index];
+                          return AnimatedEntry(
+                            index: index,
+                            child: SizedBox(
+                              width: 300,
+                              child: _MechanicCard(
+                                mechanic: m,
+                                onTap: () => Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        MechanicProfileScreen(mechanic: m),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     );
                   },

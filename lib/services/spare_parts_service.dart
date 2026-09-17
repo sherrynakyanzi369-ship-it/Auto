@@ -1,6 +1,7 @@
 import '../models/spare_part.dart';
-import 'mock_data.dart';
+import 'api_client.dart';
 
+/// Spare-parts catalog served from PostgreSQL (Redis cached) via the API.
 class SparePartsService {
   SparePartsService._();
 
@@ -22,20 +23,16 @@ class SparePartsService {
     'Lighting',
   ];
 
-  List<SparePart> search({String query = '', String category = 'All'}) {
-    var items = MockData.spareParts;
-    if (category != 'All') {
-      items = items.where((p) => p.category == category).toList();
-    }
-    if (query.trim().isNotEmpty) {
-      final q = query.toLowerCase();
-      items = items.where((p) {
-        return p.name.toLowerCase().contains(q) ||
-            p.category.toLowerCase().contains(q) ||
-            p.supplier.toLowerCase().contains(q) ||
-            p.vehicleCompat.toLowerCase().contains(q);
-      }).toList();
-    }
-    return items;
+  Future<List<SparePart>> search({
+    String query = '',
+    String category = 'All',
+  }) async {
+    final data = await ApiClient.instance.get(
+      '/parts',
+      query: {'query': query, 'category': category},
+    );
+    return (data as List<dynamic>)
+        .map((e) => SparePart.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 }

@@ -19,5 +19,16 @@ class SparePart {
     required this.vehicleCompat,
   });
 
+  factory SparePart.fromJson(Map<String, dynamic> json) => SparePart(
+        id: json['id'] as String? ?? '',
+        name: json['name'] as String? ?? '',
+        category: json['category'] as String? ?? '',
+        price: (json['price'] as num?)?.toDouble() ?? 0,
+        supplier: json['supplier'] as String? ?? '',
+        supplierArea: json['supplierArea'] as String? ?? '',
+        inStock: json['inStock'] as bool? ?? false,
+        vehicleCompat: json['vehicleCompat'] as String? ?? '',
+      );
+
   String get currency => 'UGX';
 }

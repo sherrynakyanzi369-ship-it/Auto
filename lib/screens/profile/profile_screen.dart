@@ -9,12 +9,19 @@ import '../../services/vehicle_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/animated_entry.dart';
 import '../../widgets/app_image.dart';
-import '../auth/login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String ownerEmail;
 
-  const ProfileScreen({super.key, required this.ownerEmail});
+  /// Invoked after a successful sign out so the shell can return the user to
+  /// the guest dashboard instead of tearing down the navigation stack.
+  final Future<void> Function()? onSignOut;
+
+  const ProfileScreen({
+    super.key,
+    required this.ownerEmail,
+    this.onSignOut,
+  });
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -31,6 +38,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _load() async {
+    if (!AuthService.instance.isAuthenticated) {
+      if (!mounted) return;
+      setState(() {
+        _vehicles = [];
+        _requests = [];
+      });
+      return;
+    }
     final vehicles = await VehicleService.instance.getVehicles(widget.ownerEmail);
     final requests =
         await AssistanceService.instance.getRequests(widget.ownerEmail);
@@ -42,12 +57,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _logout() async {
+    if (widget.onSignOut != null) {
+      await widget.onSignOut!();
+      return;
+    }
     await AuthService.instance.logout();
     if (!mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-      (route) => false,
-    );
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   @override

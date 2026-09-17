@@ -4,6 +4,7 @@ import '../../models/assistance_request.dart';
 import '../../models/mechanic.dart';
 import '../../models/vehicle.dart';
 import '../../services/assistance_service.dart';
+import '../../services/api_client.dart';
 import '../../services/auth_service.dart';
 import '../../services/location_service.dart';
 import '../../services/mechanic_service.dart';
@@ -87,7 +88,14 @@ class _EmergencyRequestScreenState extends State<EmergencyRequestScreen> {
 
     setState(() => _submitting = true);
     final vehicle = _vehicles.firstWhere((v) => v.id == _vehicleId);
-    final nearby = MechanicService.instance.nearDriver(_location.coords);
+    List<Mechanic> nearby;
+    try {
+      nearby = await MechanicService.instance.nearDriver(_location.coords);
+    } on ApiException {
+      nearby = const [];
+    } on NetworkException {
+      nearby = const [];
+    }
     final Mechanic? assigned = nearby.isNotEmpty ? nearby.first : null;
 
     final request = AssistanceRequest(

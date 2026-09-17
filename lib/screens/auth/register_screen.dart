@@ -8,7 +8,12 @@ import '../../widgets/app_image.dart';
 import '../home/home_shell.dart';
 
 class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+  /// When [gateMode] is true the screen was opened to unlock a service and
+  /// pops with `true` on success instead of replacing the whole navigation
+  /// stack.
+  final bool gateMode;
+
+  const RegisterScreen({super.key, this.gateMode = false});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -50,12 +55,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!mounted) return;
     setState(() => _loading = false);
     if (ok) {
+      if (widget.gateMode) {
+        Navigator.of(context).pop(true);
+        return;
+      }
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const HomeShell()),
         (route) => false,
       );
     } else {
-      setState(() => _error = 'An account with this email already exists. Try signing in.');
+      setState(() => _error =
+          AuthService.instance.lastError ??
+          'An account with this email already exists. Try signing in.');
     }
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../data/app_images.dart';
 import '../../models/spare_part.dart';
+import '../../services/api_client.dart';
 import '../../services/spare_parts_service.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/formatters.dart';
@@ -19,6 +20,8 @@ class _SparePartsScreenState extends State<SparePartsScreen> {
   final TextEditingController _search = TextEditingController();
   String _category = 'All';
   List<SparePart> _parts = [];
+  bool _loading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -32,12 +35,36 @@ class _SparePartsScreenState extends State<SparePartsScreen> {
     super.dispose();
   }
 
-  void _refresh() {
+  Future<void> _refresh() async {
     setState(() {
-      _parts = SparePartsService.instance.search(
+      _loading = true;
+      _error = null;
+    });
+    final List<SparePart> parts;
+    try {
+      parts = await SparePartsService.instance.search(
         query: _search.text,
         category: _category,
       );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = e.toString();
+      });
+      return;
+    } on NetworkException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = e.toString();
+      });
+      return;
+    }
+    if (!mounted) return;
+    setState(() {
+      _parts = parts;
+      _loading = false;
     });
   }
 
@@ -112,31 +139,102 @@ class _SparePartsScreenState extends State<SparePartsScreen> {
             ),
             const SizedBox(height: 10),
             Expanded(
-              child: _parts.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.search_off,
-                              size: 56, color: Colors.grey.shade400),
-                          const SizedBox(height: 12),
-                          Text('No parts match your search.',
-                              style: TextStyle(color: Colors.grey.shade600)),
-                        ],
-                      ),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-                      itemCount: _parts.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 14),
-                      itemBuilder: (context, index) {
-                        final p = _parts[index];
-                        return AnimatedEntry(
-                          index: index,
-                          child: _PartCard(part: p, onTap: () => _showDetail(p)),
-                        );
-                      },
-                    ),
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _error != null
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.cloud_off,
+                                  size: 56, color: Colors.grey.shade400),
+                              const SizedBox(height: 12),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 32),
+                                child: Text(
+                                  _error!,
+                                  textAlign: TextAlign.center,
+                                  style:
+                                      TextStyle(color: Colors.grey.shade600),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              FilledButton.icon(
+                                onPressed: _refresh,
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('Retry'),
+                              ),
+                            ],
+                          ),
+                        )
+                      : _parts.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.search_off,
+                                      size: 56, color: Colors.grey.shade400),
+                                  const SizedBox(height: 12),
+                                  Text('No parts match your search.',
+                                      style: TextStyle(
+                                          color: Colors.grey.shade600)),
+                                ],
+                              ),
+                            )
+                          : LayoutBuilder(
+                              builder: (context, constraints) {
+                                final bool wide =
+                                    constraints.maxWidth >= 900;
+                                if (wide) {
+                                  return GridView.builder(
+                                    padding:
+                                        const EdgeInsets.fromLTRB(20, 4, 20, 24),
+                                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 3,
+                                      crossAxisSpacing: 14,
+                                      mainAxisSpacing: 14,
+                                      childAspectRatio: 2,
+                                    ),
+                                    itemCount: _parts.length,
+                                    itemBuilder: (context, index) {
+                                      final p = _parts[index];
+                                      return AnimatedEntry(
+                                        index: index,
+                                        child: _PartCard(
+                                          part: p,
+                                          onTap: () => _showDetail(p),
+                                        ),
+                                      );
+                                    },
+                                  );
+                                }
+                                return SizedBox(
+                                  height: 140,
+                                  child: ListView.separated(
+                                    scrollDirection: Axis.horizontal,
+                                    padding:
+                                        const EdgeInsets.fromLTRB(20, 4, 20, 4),
+                                    itemCount: _parts.length,
+                                    separatorBuilder: (_, _) =>
+                                        const SizedBox(width: 14),
+                                    itemBuilder: (context, index) {
+                                      final p = _parts[index];
+                                      return AnimatedEntry(
+                                        index: index,
+                                        child: SizedBox(
+                                          width: 320,
+                                          child: _PartCard(
+                                            part: p,
+                                            onTap: () => _showDetail(p),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
             ),
           ],
         ),

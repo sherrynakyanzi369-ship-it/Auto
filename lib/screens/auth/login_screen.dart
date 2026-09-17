@@ -10,7 +10,12 @@ import '../home/home_shell.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  /// When [gateMode] is true the screen was opened to unlock a service and
+  /// pops with `true` on success instead of replacing the whole navigation
+  /// stack.
+  final bool gateMode;
+
+  const LoginScreen({super.key, this.gateMode = false});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -40,6 +45,10 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _goHome() {
+    if (widget.gateMode) {
+      Navigator.of(context).pop(true);
+      return;
+    }
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const HomeShell()),
       (route) => false,
@@ -61,7 +70,9 @@ class _LoginScreenState extends State<LoginScreen> {
     if (ok) {
       _goHome();
     } else {
-      setState(() => _error = 'Invalid email or password. Please register first.');
+      setState(() => _error =
+          AuthService.instance.lastError ??
+          'Invalid email or password. Please register first.');
     }
   }
 
@@ -70,23 +81,14 @@ class _LoginScreenState extends State<LoginScreen> {
       _loading = true;
       _error = null;
     });
-    final registered = await AuthService.instance.register(
-      name: 'Demo Driver',
-      email: 'demo@autoassist.app',
-      phone: '+256 700 123 456',
-      password: 'demo1234',
-    );
-    final ok = registered ||
-        await AuthService.instance.login(
-          email: 'demo@autoassist.app',
-          password: 'demo1234',
-        );
+    final ok = await AuthService.instance.demoLogin();
     if (!mounted) return;
     setState(() => _loading = false);
     if (ok) {
       _goHome();
     } else {
-      setState(() => _error = 'Demo login failed. Please try again.');
+      setState(() => _error =
+          AuthService.instance.lastError ?? 'Demo login failed. Please try again.');
     }
   }
 
@@ -288,11 +290,20 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           TextButton(
-                            onPressed: () => Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const RegisterScreen(),
-                              ),
-                            ),
+                            onPressed: () async {
+                              final created =
+                                  await Navigator.of(context).push<bool>(
+                                MaterialPageRoute(
+                                  builder: (_) => RegisterScreen(
+                                    gateMode: widget.gateMode,
+                                  ),
+                                ),
+                              );
+                              if (!context.mounted) return;
+                              if (created == true && widget.gateMode) {
+                                Navigator.of(context).pop(true);
+                              }
+                            },
                             child: const Text(
                               'Create account',
                               style: TextStyle(fontWeight: FontWeight.w800),
